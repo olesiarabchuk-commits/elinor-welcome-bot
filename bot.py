@@ -1,9 +1,16 @@
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
+from flask import Flask
 import os
-import asyncio
+import threading
 
 TOKEN = os.getenv("BOT_TOKEN")
+
+web = Flask(__name__)
+
+@web.route("/")
+def home():
+    return "Bot is running"
 
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.new_chat_members:
@@ -13,15 +20,13 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Раді бачити вас у спільноті майстрів Elinor 💜"
             )
 
-async def main():
+def run_bot():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+    app.run_polling()
 
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
+threading.Thread(target=run_bot).start()
 
-    while True:
-        await asyncio.sleep(3600)
-
-asyncio.run(main())
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    web.run(host="0.0.0.0", port=port)
