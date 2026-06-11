@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 import os
+import asyncio
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -12,10 +13,15 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Раді бачити вас у спільноті майстрів Elinor 💜"
             )
 
-app = Application.builder().token(TOKEN).build()
+async def main():
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
 
-app.add_handler(
-    MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome)
-)
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
 
-app.run_polling()
+    while True:
+        await asyncio.sleep(3600)
+
+asyncio.run(main())
